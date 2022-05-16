@@ -41,6 +41,7 @@ public class PlaylistFolderGenerator {
 
 		System.out.println("Playlist source folder : " + PLAYLIST_SRC_DIRECTORY);
 		System.out.println("MP3 source folder : " + MP3_SRC_DIRECTORY);
+		System.out.println("Destination : " + DESTINATION_DIRECTORY + "\n\n");
 
 		File playlistSrc = new File(PLAYLIST_SRC_DIRECTORY);
 
@@ -55,36 +56,41 @@ public class PlaylistFolderGenerator {
 			System.out.println("\n\n" + "++++++++++++++++++++++++++++++++++++\n" + playlistFile.getName()
 					+ "\n++++++++++++++++++++++++++++++++++++");
 
-			// Read and Display playlist file
-			// List<String> mp3List = displayPlayListContents(playlistFile);
-			List<File> mp3FilesList = transformWplFile(playlistFile);
+			List<File> mp3FilesList = null;
+			File outputDir = null;
 
-			// create output dir for playlist
-			File outputDir = new File(DESTINATION_DIRECTORY + "\\" + playlistFile.getName().replace(".wpl", ""));
-			if (!outputDir.exists()) {
-				outputDir.mkdirs();
-				System.out.println("\nCreated destination directory! " + outputDir.getPath() + "\n");
-			} else {
-				System.out.println("\nDestination directory already exists! " + outputDir.getPath() + "\n");
+			if (null != transformWplFile(playlistFile)) {
+				mp3FilesList = transformWplFile(playlistFile);
 
+				// create output dir for playlist
+				outputDir = new File(DESTINATION_DIRECTORY + "\\" + playlistFile.getName().replace(".wpl", ""));
+				if (!outputDir.exists()) {
+					outputDir.mkdirs();
+					System.out.println("\nCreated destination directory! " + outputDir.getPath() + "\n");
+				} else {
+					System.out.println("\nDestination directory already exists! " + outputDir.getPath() + "\n");
+
+				}
 			}
 
 			// copy each mp3 to output dir
-			for (File mp3File : mp3FilesList) {
-				try {
-					Path destMp3Path = Paths.get(outputDir.getAbsolutePath() + "\\" + mp3File.getName());
+			if (null != mp3FilesList && mp3FilesList.size() > 0) {
+				for (File mp3File : mp3FilesList) {
+					try {
+						Path destMp3Path = Paths.get(outputDir.getAbsolutePath() + "\\" + mp3File.getName());
 
-					System.out.print("Copying..  " + StringUtils.rightPad(mp3File.getName(), LOG_STRING_PADDING)
-							+ " to  " + destMp3Path);
-					Files.copy(Paths.get(mp3File.getAbsolutePath()), destMp3Path);
-					System.out.print("\n");
-				} catch (Exception e) {
-					System.out.print("\t[X]\n");
+						System.out.print("Copying..  " + StringUtils.rightPad(mp3File.getName(), LOG_STRING_PADDING)
+								+ " to  " + destMp3Path);
+						Files.copy(Paths.get(mp3File.getAbsolutePath()), destMp3Path);
+						System.out.print("\n");
+					} catch (Exception e) {
+						System.out.print("\t[X]\n");
 
-					// ignore file exists
-					if (!e.getClass().getName().equalsIgnoreCase("FileAlreadyExistsException")
-							&& !errorFiles.containsKey(mp3File.getName())) {
-						errorFiles.put(mp3File.getName(), e.getClass().getName());
+						// ignore file exists
+						if (!e.getClass().getName().equalsIgnoreCase("FileAlreadyExistsException")
+								&& !errorFiles.containsKey(mp3File.getName())) {
+							errorFiles.put(mp3File.getName(), e.getClass().getName());
+						}
 					}
 				}
 			}
@@ -115,6 +121,7 @@ public class PlaylistFolderGenerator {
 	 * @param playlistFile
 	 * @return
 	 */
+	@Deprecated
 	private static List<String> displayPlayListContents(File playlistFile) {
 		Path path = Paths.get(playlistFile.getAbsolutePath());
 		List<String> mp3List = new ArrayList<>();
@@ -161,7 +168,7 @@ public class PlaylistFolderGenerator {
 
 		if (StringUtils.isBlank(wplFileContent) || !wplFileContent.contains("<seq>")) {
 			System.out.println("\nPlaylist File is Empty : " + wplFile.getName() + "\n");
-
+			return null;
 		}
 
 		int beginIndex = wplFileContent.indexOf("<seq>") + 7;
