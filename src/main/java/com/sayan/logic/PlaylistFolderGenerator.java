@@ -24,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class PlaylistFolderGenerator {
 
-	private static final String PLAYLIST_SRC_DIRECTORY = "F:\\Muzix\\Playlists\\test";
+	private static final String PLAYLIST_SRC_DIRECTORY = "F:\\Muzix\\Playlists";
 	private static final String MP3_SRC_DIRECTORY = "F:\\Muzix";
 	private static final String DESTINATION_DIRECTORY = "D:\\CAR_MUZIX";
 
@@ -56,6 +56,10 @@ public class PlaylistFolderGenerator {
 			System.out.println("\n\n" + "++++++++++++++++++++++++++++++++++++\n" + playlistFile.getName()
 					+ "\n++++++++++++++++++++++++++++++++++++");
 
+			if (playlistFile.isDirectory()) {
+				break;
+			}
+
 			List<File> mp3FilesList = null;
 			File outputDir = null;
 
@@ -73,27 +77,7 @@ public class PlaylistFolderGenerator {
 				}
 			}
 
-			// copy each mp3 to output dir
-			if (null != mp3FilesList && mp3FilesList.size() > 0) {
-				for (File mp3File : mp3FilesList) {
-					try {
-						Path destMp3Path = Paths.get(outputDir.getAbsolutePath() + "\\" + mp3File.getName());
-
-						System.out.print("Copying..  " + StringUtils.rightPad(mp3File.getName(), LOG_STRING_PADDING)
-								+ " to  " + destMp3Path);
-						Files.copy(Paths.get(mp3File.getAbsolutePath()), destMp3Path);
-						System.out.print("\n");
-					} catch (Exception e) {
-						System.out.print("\t[X]\n");
-
-						// ignore file exists
-						if (!e.getClass().getName().equalsIgnoreCase("FileAlreadyExistsException")
-								&& !errorFiles.containsKey(mp3File.getName())) {
-							errorFiles.put(mp3File.getName(), e.getClass().getName());
-						}
-					}
-				}
-			}
+			copyFiles(mp3FilesList, outputDir);
 
 		}
 
@@ -113,6 +97,36 @@ public class PlaylistFolderGenerator {
 
 		System.out.println("\n\nCompleted Processing in : " + min + "m " + sec + "s " + milli + "ms ");
 
+	}
+
+	/**
+	 * Copies Files
+	 * 
+	 * @param mp3FilesList
+	 * @param outputDir
+	 */
+	private static void copyFiles(List<File> mp3FilesList, File outputDir) {
+		// copy each mp3 to output dir
+		if (null != mp3FilesList && mp3FilesList.size() > 0) {
+			for (File mp3File : mp3FilesList) {
+				try {
+					Path destMp3Path = Paths.get(outputDir.getAbsolutePath() + "\\" + mp3File.getName());
+
+					System.out.print("Copying..  " + StringUtils.rightPad(mp3File.getName(), LOG_STRING_PADDING)
+							+ " to  " + destMp3Path);
+					Files.copy(Paths.get(mp3File.getAbsolutePath()), destMp3Path);
+					System.out.print("\n");
+				} catch (Exception e) {
+					System.out.print("\t[X]\n");
+
+					// ignore file exists
+					if (!e.getClass().getName().equalsIgnoreCase("FileAlreadyExistsException")
+							&& !errorFiles.containsKey(mp3File.getName())) {
+						errorFiles.put(mp3File.getName(), e.getClass().getName());
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -191,7 +205,20 @@ public class PlaylistFolderGenerator {
 			// replace all ..\ at start of address
 			line = line.replaceAll("\\.\\.", "");
 
-			mp3List.add(new File(MP3_SRC_DIRECTORY + line.trim()));
+			// replace apostrophe
+			line = line.replaceAll("&apos;", "'");
+
+			// replace amperson and trim
+			line = line.replaceAll("&amp;", "&").trim();
+
+			if (StringUtils.isNotBlank(line.trim())) {
+				
+				if (line.substring(0, 1).equalsIgnoreCase("\\")) {
+					mp3List.add(new File(MP3_SRC_DIRECTORY + line));
+				} else {
+					mp3List.add(new File(line.trim()));
+				}
+			}
 		}
 
 		mp3List.forEach(mp3 -> System.out.println("\t" + mp3));
