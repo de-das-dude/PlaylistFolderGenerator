@@ -15,12 +15,18 @@ import org.apache.commons.lang3.time.StopWatch;
 
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * 
+ * 
+ * @author de-das-dude
+ *
+ */
 @Log4j2
 public class PlaylistFolderGenerator {
 
-	private static final String PLAYLIST_SRC_DIRECTORY = "F:\\Muzix\\Playlists";
+	private static final String PLAYLIST_SRC_DIRECTORY = "F:\\Muzix\\Playlists\\test";
 	private static final String MP3_SRC_DIRECTORY = "F:\\Muzix";
-	private static final String DESTINATION_DIRECTORY = "H:\\CAR_MUZIX";
+	private static final String DESTINATION_DIRECTORY = "D:\\CAR_MUZIX";
 
 	private static final int LOG_STRING_PADDING = 70;
 
@@ -50,28 +56,26 @@ public class PlaylistFolderGenerator {
 					+ "\n++++++++++++++++++++++++++++++++++++");
 
 			// Read and Display playlist file
-			//List<String> mp3List = displayPlayListContents(playlistFile);
-			List<File> mp3FilesList  = transformWplFile(playlistFile);
-			
+			// List<String> mp3List = displayPlayListContents(playlistFile);
+			List<File> mp3FilesList = transformWplFile(playlistFile);
+
 			// create output dir for playlist
 			File outputDir = new File(DESTINATION_DIRECTORY + "\\" + playlistFile.getName().replace(".wpl", ""));
 			if (!outputDir.exists()) {
 				outputDir.mkdirs();
 				System.out.println("\nCreated destination directory! " + outputDir.getPath() + "\n");
-			}
-			else {
+			} else {
 				System.out.println("\nDestination directory already exists! " + outputDir.getPath() + "\n");
 
 			}
-
 
 			// copy each mp3 to output dir
 			for (File mp3File : mp3FilesList) {
 				try {
 					Path destMp3Path = Paths.get(outputDir.getAbsolutePath() + "\\" + mp3File.getName());
 
-					System.out.print(
-							"Copying..  " + StringUtils.rightPad(mp3File.getName(), LOG_STRING_PADDING) + " to  " + destMp3Path);
+					System.out.print("Copying..  " + StringUtils.rightPad(mp3File.getName(), LOG_STRING_PADDING)
+							+ " to  " + destMp3Path);
 					Files.copy(Paths.get(mp3File.getAbsolutePath()), destMp3Path);
 					System.out.print("\n");
 				} catch (Exception e) {
@@ -154,6 +158,12 @@ public class PlaylistFolderGenerator {
 		}
 
 		// trim unnecessary bit
+
+		if (StringUtils.isBlank(wplFileContent) || !wplFileContent.contains("<seq>")) {
+			System.out.println("\nPlaylist File is Empty : " + wplFile.getName() + "\n");
+
+		}
+
 		int beginIndex = wplFileContent.indexOf("<seq>") + 7;
 		int endIndex = wplFileContent.indexOf("</seq>");
 		wplFileContent = wplFileContent.substring(beginIndex, endIndex);
@@ -176,7 +186,7 @@ public class PlaylistFolderGenerator {
 
 			mp3List.add(new File(MP3_SRC_DIRECTORY + line.trim()));
 		}
-		
+
 		mp3List.forEach(mp3 -> System.out.println("\t" + mp3));
 
 		return mp3List;
